@@ -4,7 +4,7 @@ const path = require('path');
 const pino = require('pino');
 const QR = require('qrcode');
 const {
-  default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion,
+  default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers,
 } = require('@whiskeysockets/baileys');
 const { criarMotor } = require('./engine');
 
@@ -41,7 +41,11 @@ async function iniciar(id) {
 
   const { state, saveCreds } = await useMultiFileAuthState(path.join(pasta(id), 'auth'));
   const { version } = await fetchLatestBaileysVersion();
-  const sock = makeWASocket({ version, auth: state, logger: pino({ level: 'silent' }) });
+  const sock = makeWASocket({
+    version, auth: state, logger: pino({ level: 'silent' }),
+    browser: Browsers.macOS('Chrome'), // o login por código só aceita um navegador "real"
+    qrTimeout: 60000, // cada QR/código vale 1 min (sessão de ~6 min antes de renovar)
+  });
   b.sock = sock;
   sock.ev.on('creds.update', saveCreds);
 
