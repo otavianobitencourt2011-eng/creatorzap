@@ -202,7 +202,7 @@ function mostrarStatus(d){
 }
 function poll(){clearTimeout(timer);api(`/api/bots/${botId}`).then(d=>{mostrarStatus(d);timer=setTimeout(poll,2500)}).catch(()=>{timer=setTimeout(poll,5000)})}
 function abrirPainel(id){
-  botId=id;location.hash=id;$('painel').hidden=false;$('criar').hidden=true;
+  botId=id;location.hash=id;try{localStorage.setItem('creatorzap_bot',id)}catch{}$('painel').hidden=false;$('criar').hidden=true;
   $('meuLink').textContent=location.href;poll();
 }
 $('bCriar').onclick=()=>{$('erro').textContent='';$('bCriar').disabled=true;
@@ -213,9 +213,10 @@ $('bDesligar').onclick=()=>api(`/api/bots/${botId}/desligar`,{method:'POST'}).th
 $('bSair').onclick=()=>api(`/api/bots/${botId}/sair`,{method:'POST'}).then(()=>api(`/api/bots/${botId}/ligar`,{method:'POST'})).then(poll);
 let confirmaApagar=false;
 $('bApagar').onclick=()=>{if(!confirmaApagar){confirmaApagar=true;$('bApagar').textContent='Toque de novo para apagar';return}
-  api(`/api/bots/${botId}`,{method:'DELETE'}).then(()=>{location.hash='';location.reload()})};
+  api(`/api/bots/${botId}`,{method:'DELETE'}).then(()=>{try{localStorage.removeItem('creatorzap_bot')}catch{};location.hash='';location.reload()})};
 
 renderMenu();renderKw();update();
-const h=location.hash.slice(1);
-if(/^[a-f0-9]{32}$/.test(h))api(`/api/bots/${h}`).then(d=>{carregar(d.config);abrirPainel(h)}).catch(()=>{location.hash=''});
+let h=location.hash.slice(1);
+if(!h){try{h=localStorage.getItem('creatorzap_bot')||''}catch{}}
+if(/^[a-f0-9]{32}$/.test(h))api(`/api/bots/${h}`).then(d=>{carregar(d.config);abrirPainel(h)}).catch(()=>{location.hash='';try{localStorage.removeItem('creatorzap_bot')}catch{}});
 </script></body></html>
