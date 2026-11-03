@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CreatorZap</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: uma coluna no celular; montar bot à esquerda e testar à direita em telas largas */
+:root{
+  --bg:#f3f6f4;--card:#ffffff;--fg:#14211b;--muted:#5b6b63;--line:#d9e2dd;
+  --accent:#0e8a5f;--accent-fg:#ffffff;--in:#ffffff;--out:#d7f5e3;--chat:#e7ede9;
+  --display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Figtree',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1613;--card:#17211c;--fg:#e4ede8;--muted:#93a69c;--line:#2a3831;--accent:#2fbf86;--accent-fg:#06110c;--in:#1f2c26;--out:#145338;--chat:#0b110e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1613;--card:#17211c;--fg:#e4ede8;--muted:#93a69c;--line:#2a3831;--accent:#2fbf86;--accent-fg:#06110c;--in:#1f2c26;--out:#145338;--chat:#0b110e;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:20px}
+header h1{font:800 clamp(28px,7vw,40px)/1.05 var(--display);margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:60ch}
+.grid{display:grid;gap:20px;grid-template-columns:1fr}
+@media(min-width:820px){.grid{grid-template-columns:1fr 380px;align-items:start}.phone{position:sticky;top:16px}}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+h2{font:600 17px var(--display);margin:0}
+label{display:grid;gap:4px;font-weight:600;font-size:13px;color:var(--muted)}
+input,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;box-sizing:border-box}
+textarea{min-height:60px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item{display:grid;gap:6px;border-top:1px dashed var(--line);padding-top:10px}
+.item .row input{flex:1;min-width:0}
+.chk{display:flex;gap:6px;align-items:center;font-weight:400;color:var(--fg);font-size:14px}
+.chk input{width:auto}
+button{font:600 14px var(--body);border-radius:8px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+button.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.x{padding:6px 10px}
+.phone{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;height:560px;max-height:80vh}
+.top{padding:12px 16px;background:var(--accent);color:var(--accent-fg);font-weight:600}
+.top small{display:block;font-weight:400;opacity:.85}
+#chat{flex:1;overflow-y:auto;background:var(--chat);padding:12px;display:flex;flex-direction:column;gap:6px}
+.b{max-width:82%;padding:7px 10px;border-radius:10px;white-space:pre-wrap;word-wrap:break-word;font-size:14px}
+.b.in{background:var(--in);align-self:flex-start}
+.b.out{background:var(--out);align-self:flex-end}
+.b.sys{align-self:center;font-size:12px;color:var(--muted);background:none}
+form.send{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+pre{font:12px/1.5 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;overflow-x:auto;margin:0;max-height:260px}
+ol{margin:0;padding-left:20px}
+code{font-family:var(--mono);font-size:13px}
+.hint{color:var(--muted);font-size:13px;margin:0}
+
+.steps{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.steps span{padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
+.steps span.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.big{font-size:16px;padding:14px 18px;width:100%}
+.qrbox{display:grid;place-items:center;gap:10px;text-align:center}
+.qrbox img{width:280px;max-width:100%;background:#fff;padding:8px;border-radius:12px}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:600;background:var(--chat)}
+.pill.on{background:var(--accent);color:var(--accent-fg)}
+.err{color:#c0392b;font-size:14px;margin:0}
+.link{font:12px var(--mono);word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+</style></head><body>
+
+<div class="wrap">
+<header>
+  <h1>CreatorZap</h1>
+  <p>Crie um bot de atendimento pro seu WhatsApp em 1 minuto. Preencha, teste no chat de teste e escaneie o QR Code. Pronto.</p>
+  <div class="steps"><span class="on" id="s1">1. Monte</span><span id="s2">2. Conecte</span><span id="s3">3. No ar</span></div>
+</header>
+
+<div class="grid">
+<div style="display:grid;gap:20px;min-width:0">
+  <section id="painel" hidden>
+    <div class="row" style="justify-content:space-between"><h2>Conectar ao WhatsApp</h2><span id="pill" class="pill">…</span></div>
+    <div class="qrbox" id="qrbox"></div>
+    <div class="row"><button type="button" id="bSalvar" class="pri">Salvar alterações</button><button type="button" id="bDesligar">Desligar</button><button type="button" id="bSair">Trocar número</button><button type="button" id="bApagar">Apagar bot</button></div>
+    <p class="hint" id="salvo"></p>
+    <p class="hint">Guarde este link: é por ele que você volta pra editar seu bot (não compartilhe).</p>
+    <div class="link" id="meuLink"></div>
+  </section>
+  
+  <section>
+    <h2>Básico</h2>
+    <label>Nome da empresa<input id="empresa" value="Minha Loja"></label>
+    <label>Nome do bot<input id="bot" value="Atendente Virtual"></label>
+    <label>Boas-vindas <span style="font-weight:400">(use {empresa} e {bot})</span><textarea id="boas">Olá! 👋 Bem-vindo(a) à *{empresa}*. Eu sou o {bot}.</textarea></label>
+    <label>Quando não entender<input id="nao" value="Não entendi 😅. Digite *menu* para ver as opções."></label>
+  </section>
+
+  <section>
+    <h2>Menu</h2>
+    <div id="menu"></div>
+    <button type="button" id="addMenu">+ Adicionar opção</button>
+  </section>
+
+  <section>
+    <h2>Palavras-chave</h2>
+    <p class="hint">Separe as palavras por vírgula. Acentos e maiúsculas não importam.</p>
+    <div id="kw"></div>
+    <button type="button" id="addKw">+ Adicionar palavra-chave</button>
+  </section>
+
+  <section>
+    <h2>Horário de atendimento</h2>
+    <label class="chk"><input type="checkbox" id="hAtivo"> Responder só dentro do horário</label>
+    <div class="row"><label style="flex:1">Abre<input id="hIni" type="time" value="09:00"></label><label style="flex:1">Fecha<input id="hFim" type="time" value="18:00"></label></div>
+    <label>Mensagem fora do horário<input id="hMsg" value="Estamos fora do horário de atendimento. Responderemos assim que possível!"></label>
+  </section>
+
+  <section id="criar">
+    <button class="pri big" type="button" id="bCriar">Criar meu bot e conectar</button>
+    <p class="err" id="erro"></p>
+    <p class="hint">Na próxima tela aparece um QR Code. No celular do bot, abra WhatsApp &gt; Aparelhos conectados &gt; Conectar aparelho e escaneie. Se estiver no mesmo celular, abra esta página em outro aparelho para escanear.</p>
+  </section>
+</div>
+
+<div class="phone">
+  <div class="top"><span id="tTitle">Minha Loja</span><small>teste aqui antes de conectar</small></div>
+  <div id="chat"></div>
+  <form class="send" id="send"><input id="msg" placeholder="Escreva como um cliente…" autocomplete="off"><button class="pri">Enviar</button></form>
+</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let menu=[{titulo:'Horário de funcionamento',resposta:'Atendemos de segunda a sexta, das 9h às 18h.'},{titulo:'Endereço',resposta:'Rua Exemplo, 123 - Centro.'},{titulo:'Falar com um atendente',resposta:'Certo! Um atendente vai te responder em breve. 🙌',pausarBot:true}];
+let kw=[{contem:'preço, preco, valor',resposta:'Nossa tabela de preços: https://exemplo.com/precos'},{contem:'pix',resposta:'Chave PIX: contato@exemplo.com'}];
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+function renderMenu(){
+  $('menu').innerHTML=menu.map((m,i)=>`<div class="item"><div class="row"><b>${i+1}</b><input id="mt${i}" data-i="${i}" data-k="titulo" value="${esc(m.titulo)}" placeholder="Título"><button class="x" type="button" data-del="${i}">✕</button></div><textarea id="mr${i}" data-i="${i}" data-k="resposta" placeholder="Resposta">${esc(m.resposta)}</textarea><label class="chk"><input type="checkbox" id="mp${i}" data-i="${i}" data-k="pausarBot" ${m.pausarBot?'checked':''}> Passa para um atendente (pausa o bot)</label></div>`).join('');
+}
+function renderKw(){
+  $('kw').innerHTML=kw.map((k,i)=>`<div class="item"><div class="row"><input id="kc${i}" data-j="${i}" data-k="contem" value="${esc(k.contem)}" placeholder="palavras"><button class="x" type="button" data-delk="${i}">✕</button></div><input id="kr${i}" data-j="${i}" data-k="resposta" value="${esc(k.resposta)}" placeholder="Resposta"></div>`).join('');
+}
+$('menu').addEventListener('input',e=>{const t=e.target,i=t.dataset.i;if(i==null)return;menu[i][t.dataset.k]=t.type==='checkbox'?t.checked:t.value;update()});
+$('menu').addEventListener('click',e=>{const d=e.target.dataset.del;if(d!=null){menu.splice(d,1);renderMenu();update()}});
+$('kw').addEventListener('input',e=>{const t=e.target,j=t.dataset.j;if(j==null)return;kw[j][t.dataset.k]=t.value;update()});
+$('kw').addEventListener('click',e=>{const d=e.target.dataset.delk;if(d!=null){kw.splice(d,1);renderKw();update()}});
+$('addMenu').onclick=()=>{menu.push({titulo:'',resposta:''});renderMenu();update()};
+$('addKw').onclick=()=>{kw.push({contem:'',resposta:''});renderKw();update()};
+document.querySelectorAll('section input:not([data-i]):not([data-j]),section textarea:not([data-i])').forEach(el=>el.addEventListener('input',update));
+
+function config(){
+  return {nomeBot:$('bot').value,nomeEmpresa:$('empresa').value,boasVindas:$('boas').value,
+    menu:menu.map((m,i)=>({opcao:String(i+1),titulo:m.titulo,resposta:m.resposta,...(m.pausarBot&&{pausarBot:true})})),
+    palavrasChave:kw.filter(k=>k.contem.trim()).map(k=>({contem:k.contem.split(',').map(s=>s.trim()).filter(Boolean),resposta:k.resposta})),
+    naoEntendi:$('nao').value,
+    horario:{ativo:$('hAtivo').checked,dias:[1,2,3,4,5],inicio:$('hIni').value,fim:$('hFim').value,mensagemFora:$('hMsg').value},
+    responderGrupos:false,pausaMinutos:60,delayDigitandoMs:1200};
+}
+
+// Mesma lógica do src/engine.js do projeto
+const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+const fill=(t,c)=>String(t).replace(/\{empresa\}/g,c.nomeEmpresa).replace(/\{bot\}/g,c.nomeBot);
+const menuTxt=c=>`${fill(c.boasVindas,c)}\n\nEscolha uma opção:\n${c.menu.map(m=>`*${m.opcao}* - ${m.titulo}`).join('\n')}`;
+function dentro(c,d){const h=c.horario;if(!h.ativo)return true;if(!h.dias.includes(d.getDay()))return false;const m=d.getHours()*60+d.getMinutes(),[a,b]=h.inicio.split(':').map(Number),[x,y]=h.fim.split(':').map(Number);return m>=a*60+b&&m<x*60+y}
+let st={visto:false,pausado:false,fora:false};
+function responder(c,txt){
+  const m=norm(txt);
+  if(['bot','#bot','voltar'].includes(m)){st.pausado=false;return [menuTxt(c)]}
+  if(st.pausado)return [];
+  if(!dentro(c,new Date())){if(st.fora)return [];st.fora=true;return [fill(c.horario.mensagemFora,c)]}
+  st.fora=false;
+  if(!st.visto||['menu','oi','ola','inicio','0'].includes(m)){st.visto=true;return [menuTxt(c)]}
+  const it=c.menu.find(x=>norm(x.opcao)===m);
+  if(it){if(it.pausarBot)st.pausado=true;return [fill(it.resposta,c)]}
+  const k=c.palavrasChave.find(k=>k.contem.some(p=>m.includes(norm(p))));
+  if(k)return [fill(k.resposta,c)];
+  return [fill(c.naoEntendi,c)];
+}
+function bubble(t,cls){const d=document.createElement('div');d.className='b '+cls;d.innerHTML=esc(t).replace(/\*([^*\n]+)\*/g,'<b>$1</b>');$('chat').appendChild(d);$('chat').scrollTop=1e9}
+$('send').addEventListener('submit',e=>{
+  e.preventDefault();const t=$('msg').value.trim();if(!t)return;$('msg').value='';
+  bubble(t,'out');const r=responder(config(),t);
+  if(!r.length)bubble('bot pausado · digite "bot" para reativar','sys');
+  r.forEach((x,i)=>setTimeout(()=>bubble(x,'in'),350*(i+1)));
+});
+function update(){const c=config();$('tTitle').textContent=c.nomeEmpresa||'Seu bot'}
+
+
+bubble('Oi!','out');responder(config(),'Oi!').forEach(x=>bubble(x,'in'));
+bubble('qual o preço?','out');responder(config(),'qual o preço?').forEach(x=>bubble(x,'in'));
+
+let botId=null,timer=null;
+const api=(u,o={})=>fetch(u,{headers:{'Content-Type':'application/json'},...o}).then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.erro||'Erro');return j});
+function carregar(c){
+  $('empresa').value=c.nomeEmpresa;$('bot').value=c.nomeBot;$('boas').value=c.boasVindas;$('nao').value=c.naoEntendi;
+  menu=c.menu.map(m=>({titulo:m.titulo,resposta:m.resposta,pausarBot:!!m.pausarBot}));
+  kw=c.palavrasChave.map(k=>({contem:k.contem.join(', '),resposta:k.resposta}));
+  $('hAtivo').checked=c.horario.ativo;$('hIni').value=c.horario.inicio;$('hFim').value=c.horario.fim;$('hMsg').value=c.horario.mensagemFora;
+  renderMenu();renderKw();update();
+}
+function passo(n){['s1','s2','s3'].forEach((s,i)=>$(s).classList.toggle('on',i<n))}
+function mostrarStatus(d){
+  const p=$('pill'),q=$('qrbox');
+  const nomes={online:'No ar ✓',aguardando_qr:'Aguardando QR Code',conectando:'Conectando…',parado:'Desligado',desconectado:'Desconectado'};
+  p.textContent=nomes[d.status]||d.status;p.classList.toggle('on',d.status==='online');
+  if(d.status==='online'){passo(3);q.innerHTML=`<p><b>Seu bot está respondendo no WhatsApp${d.numero?' +'+d.numero:''}.</b><br><span class="hint">Pode fechar esta página, ele continua funcionando.</span></p>`}
+  else if(d.qr){passo(2);q.innerHTML=`<img alt="QR Code para conectar o WhatsApp" src="${d.qr}"><p class="hint">WhatsApp &gt; Aparelhos conectados &gt; Conectar aparelho</p>`}
+  else if(d.status==='parado'){passo(2);q.innerHTML='<button type="button" class="pri" id="bLigar">Ligar o bot</button>';$('bLigar').onclick=()=>api(`/api/bots/${botId}/ligar`,{method:'POST'}).then(poll)}
+  else{passo(2);q.innerHTML='<p class="hint">Gerando QR Code…</p>'}
+}
+function poll(){clearTimeout(timer);api(`/api/bots/${botId}`).then(d=>{mostrarStatus(d);timer=setTimeout(poll,2500)}).catch(()=>{timer=setTimeout(poll,5000)})}
+function abrirPainel(id){
+  botId=id;location.hash=id;$('painel').hidden=false;$('criar').hidden=true;
+  $('meuLink').textContent=location.href;poll();
+}
+$('bCriar').onclick=()=>{$('erro').textContent='';$('bCriar').disabled=true;
+  api('/api/bots',{method:'POST',body:JSON.stringify(config())}).then(r=>{abrirPainel(r.id);scrollTo({top:0,behavior:'smooth'})})
+  .catch(e=>$('erro').textContent=e.message).finally(()=>$('bCriar').disabled=false)};
+$('bSalvar').onclick=()=>api(`/api/bots/${botId}`,{method:'PUT',body:JSON.stringify(config())}).then(()=>{$('salvo').textContent='Salvo! O bot já responde com as mudanças.'}).catch(e=>$('salvo').textContent=e.message);
+$('bDesligar').onclick=()=>api(`/api/bots/${botId}/desligar`,{method:'POST'}).then(poll);
+$('bSair').onclick=()=>api(`/api/bots/${botId}/sair`,{method:'POST'}).then(()=>api(`/api/bots/${botId}/ligar`,{method:'POST'})).then(poll);
+let confirmaApagar=false;
+$('bApagar').onclick=()=>{if(!confirmaApagar){confirmaApagar=true;$('bApagar').textContent='Toque de novo para apagar';return}
+  api(`/api/bots/${botId}`,{method:'DELETE'}).then(()=>{location.hash='';location.reload()})};
+
+renderMenu();renderKw();update();
+const h=location.hash.slice(1);
+if(/^[a-f0-9]{32}$/.test(h))api(`/api/bots/${h}`).then(d=>{carregar(d.config);abrirPainel(h)}).catch(()=>{location.hash=''});
+</script></body></html>
