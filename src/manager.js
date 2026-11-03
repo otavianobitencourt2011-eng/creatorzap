@@ -52,12 +52,14 @@ async function iniciar(id) {
   sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
     if (b.sock !== sock) return; // socket antigo
     if (qr) { b.status = 'aguardando_qr'; b.qr = await QR.toDataURL(qr, { margin: 1, width: 320 }); }
+    if (connection) console.log(`[bot] conexão: ${connection}`);
     if (connection === 'open') {
       b.status = 'online'; b.qr = null;
       b.numero = (sock.user?.id || '').split(':')[0].split('@')[0];
     }
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
+      console.log(`[bot] caiu (código ${code}). ${b.parando ? 'Desligado.' : 'Reconectando...'}`);
       if (b.parando) return;
       if (code === DisconnectReason.loggedOut) {
         fs.rmSync(path.join(pasta(id), 'auth'), { recursive: true, force: true });
@@ -78,10 +80,16 @@ async function iniciar(id) {
         || m.message.imageMessage?.caption || '';
       if (m.key.fromMe) {
         if (b.enviadas.delete(m.key.id)) continue;
-        if (texto.trim().toLowerCase() !== '#bot') { b.motor.pausar(jid); continue; }
+        if (texto.trim().toLowerCase() !== '#bot') {
+          b.motor.pausar(jid);
+          console.log(`[bot] você respondeu ${jid.split('@')[0]} manualmente: bot pausado nessa conversa (mande #bot para voltar)`);
+          continue;
+        }
       }
       try {
-        for (const r of b.motor.responder(jid, texto)) {
+        const respostas = b.motor.responder(jid, texto);
+        console.log(`[bot] ${jid.split('@')[0]}: "${texto.slice(0, 40)}" -> ${respostas.length ? 'respondendo' : 'sem resposta (pausado/fora do horário)'}`);
+        for (const r of respostas) {
           await sock.sendPresenceUpdate('composing', jid);
           await esperar(b.cfg.delayDigitandoMs || 0);
           const s = await sock.sendMessage(jid, { text: r });
