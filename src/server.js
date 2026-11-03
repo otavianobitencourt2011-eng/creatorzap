@@ -35,6 +35,10 @@ app.post('/api/bots', async (req, res) => {
 app.get('/api/bots/:id', comBot((req, res, id) => res.json({ config: bots.lerConfig(id), ...bots.info(id) })));
 app.put('/api/bots/:id', comBot((req, res, id) => { bots.salvarConfig(id, validar(req.body)); res.json({ ok: true }); }));
 app.post('/api/bots/:id/ligar', comBot(async (req, res, id) => { await bots.iniciar(id); res.json({ ok: true }); }));
+app.post('/api/bots/:id/codigo', comBot(async (req, res, id) => {
+  try { res.json({ codigo: await bots.codigoPareamento(id, req.body.numero) }); }
+  catch (e) { res.status(400).json({ erro: e.message }); }
+}));
 app.post('/api/bots/:id/desligar', comBot(async (req, res, id) => { await bots.parar(id); res.json({ ok: true }); }));
 app.post('/api/bots/:id/sair', comBot(async (req, res, id) => { await bots.parar(id, true); res.json({ ok: true }); }));
 app.delete('/api/bots/:id', comBot(async (req, res, id) => { await bots.apagar(id); res.json({ ok: true }); }));

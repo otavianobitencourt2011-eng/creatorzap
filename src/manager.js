@@ -88,6 +88,18 @@ async function iniciar(id) {
   });
 }
 
+// Conectar sem QR: gera um código de 8 letras para digitar no WhatsApp do celular.
+async function codigoPareamento(id, numero) {
+  const b = bots.get(id);
+  if (!b?.sock) throw new Error('Ligue o bot primeiro');
+  if (b.status === 'online') throw new Error('Já está conectado');
+  const n = String(numero || '').replace(/\D/g, '');
+  if (n.length < 10) throw new Error('Digite o número com DDI e DDD, ex: 5511999998888');
+  for (let i = 0; i < 20 && b.status !== 'aguardando_qr'; i++) await esperar(500);
+  const c = await b.sock.requestPairingCode(n);
+  return c.match(/.{1,4}/g).join('-');
+}
+
 async function parar(id, sair = false) {
   const b = bots.get(id);
   if (!b) return;
@@ -109,4 +121,4 @@ function religarTodos() {
   }
 }
 
-module.exports = { salvarConfig, lerConfig, iniciar, parar, apagar, info, religarTodos };
+module.exports = { codigoPareamento, salvarConfig, lerConfig, iniciar, parar, apagar, info, religarTodos };
